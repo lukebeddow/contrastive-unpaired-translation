@@ -247,11 +247,17 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     norm_layer = get_norm_layer(norm_type=norm)
 
     if netG == 'resnet_9blocks':
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, no_antialias=no_antialias, no_antialias_up=no_antialias_up, n_blocks=9, opt=opt)
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, 
+                              use_dropout=use_dropout, no_antialias=no_antialias, 
+                              no_antialias_up=no_antialias_up, n_blocks=9, opt=opt)
     elif netG == 'resnet_6blocks':
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, no_antialias=no_antialias, no_antialias_up=no_antialias_up, n_blocks=6, opt=opt)
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, 
+                              use_dropout=use_dropout, no_antialias=no_antialias, 
+                              no_antialias_up=no_antialias_up, n_blocks=6, opt=opt)
     elif netG == 'resnet_4blocks':
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, no_antialias=no_antialias, no_antialias_up=no_antialias_up, n_blocks=4, opt=opt)
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, 
+                              use_dropout=use_dropout, no_antialias=no_antialias, 
+                              no_antialias_up=no_antialias_up, n_blocks=4, opt=opt)
     elif netG == 'unet_128':
         net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
@@ -918,7 +924,9 @@ class ResnetGenerator(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect', no_antialias=False, no_antialias_up=False, opt=None):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, 
+                 use_dropout=False, n_blocks=6, padding_type='reflect', no_antialias=False, 
+                 no_antialias_up=False, opt=None):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -1401,3 +1409,53 @@ class GroupedChannelNorm(nn.Module):
         std = x.std(dim=2, keepdim=True)
         x_norm = (x - mean) / (std + 1e-7)
         return x_norm.view(*shape)
+
+if __name__ == "__main__":
+
+    import sys
+    sys.path.insert(0, "/home/luke/repo/CUT")
+    # import 
+
+    input_nc = 3
+    output_nc = 3
+    ngf = 64
+    netD = "basic"
+    netG = "resnet_4blocks"
+    normG = "instance"
+    dropout = False
+    init_type = "xavier"
+    init_gain = 0.02
+    no_antialias = False
+    no_antialias_up = False
+    gpu_id = [0]
+    opt = None
+    mynet = define_G(input_nc, output_nc, ngf, netG, normG, dropout, init_type,
+                     init_gain, no_antialias, no_antialias_up, gpu_id, opt)
+    
+    # print("self.model", mynet.model)
+    # print("len(model)", len(mynet.model))
+    x = 128
+
+    img = torch.rand((1, 3, x, x)).to(torch.device("cuda"))
+    out = mynet(img)
+
+    import time
+
+    t0 = time.time()
+    out = mynet(img)
+    t1 = time.time()
+
+    print(f"Time taken on GPU {(t1 - t0) * 1000:.1f} milliseconds")
+
+    time.sleep(10)
+
+    mynet.model.to(torch.device("cpu"))
+    img = torch.rand((1, 3, x, x))
+
+    t2 = time.time()
+    out = mynet(img)
+    t3 = time.time()
+
+    print(f"Time taken on CPU {(t3 - t2) * 1000:.1f} milliseconds")
+
+    # print("output shape is", out.shape)

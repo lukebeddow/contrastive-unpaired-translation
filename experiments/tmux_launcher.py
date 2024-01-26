@@ -94,7 +94,7 @@ class TmuxLauncher():
         num_gpus = len(gpu_ids)
         global available_gpu_devices
         if available_gpu_devices is None and gpu_id is None:
-            available_gpu_devices = [str(g) for g in GPUtil.getAvailable(limit=8, maxMemory=0.5)]
+            available_gpu_devices = ["0"] #[str(g) for g in GPUtil.getAvailable(limit=8, maxMemory=0.5)]
         if gpu_id is not None:
             available_gpu_devices = [i for i in str(gpu_id)]
         if len(available_gpu_devices) < num_gpus:
